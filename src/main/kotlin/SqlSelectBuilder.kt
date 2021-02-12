@@ -1,6 +1,7 @@
 class SqlSelectBuilder {
 
     private val columns = mutableListOf<String>()
+    private var condition: Condition? = null
 
     private lateinit var table: String
 
@@ -15,18 +16,23 @@ class SqlSelectBuilder {
 
     override fun toString(): String {
         val columnsToFetch = if (columns.isEmpty()) "*" else this.columns.joinToString(separator = ",")
-        return "select $columnsToFetch from ${this.table}"
+        val conditionString = if (this.condition == null) "" else "where $condition"
+        return "select $columnsToFetch from ${this.table} $conditionString "
     }
 
     fun select(vararg columns: String) {
         if (columns.isEmpty()) {
             throw IllegalArgumentException("columns can not be empty")
         }
-        this.columns.addAll(columns)
+        this.columns += columns
     }
 
     fun from(table: String) {
         this.table = table
+    }
+
+    fun where(initializer: Condition.() -> Unit) {
+        condition = And().apply(initializer)
     }
 
 
@@ -37,12 +43,6 @@ fun query(initializer: SqlSelectBuilder.() -> Unit): SqlSelectBuilder {
 }
 
 
-fun main() {
-    val build = query {
-        select("name", "age", "sex", "address")
-        from("user")
-    }.build()
-    println(build)
-}
+
 
 
